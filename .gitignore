@@ -15,3 +15,4 @@ frontend/.env.local
 *.egg-info/
 .DS_Store
 .streamlit/secrets.toml
+roadmap.txt

@@ -1,116 +1,71 @@
 # AI Financial Analyst Agent
 
-Enterprise-grade AI financial analysis: upload P&L data → KPIs → forecasts → anomalies → AI insights → executive reports.
+Upload monthly P&L data and get validated KPIs, forecasts, anomaly flags, and AI insights grounded in computed metrics—not guessed numbers.
 
-> For analysis and demonstration only. Not financial advice.
+**Demo / portfolio project only. Not financial advice.**
 
-## Architecture
+## Stack
 
-| Layer | Stack |
-|-------|--------|
-| **UI (Step 7)** | Next.js 14, React, Tailwind, shadcn-style components, Recharts |
-| **API** | FastAPI, Python analytics engine |
-| **Legacy UI** | Streamlit (`app/streamlit_app.py`) |
+- **Backend:** FastAPI, pandas, Prophet, OpenAI (tool-based chat)
+- **Frontend:** Next.js 14, Tailwind, Recharts
+- **Data:** SQLite (local) or PostgreSQL (Docker)
+- **Ops:** Docker Compose, background worker, JWT / Google SSO, API keys
 
-## Quick start — Premium dashboard (recommended)
+## Quick start (local)
 
-### 1. Backend API
+**API**
 
 ```bash
-cd "AI Financial Analyst Agent"
-python3 -m venv .venv
-source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # add OPENAI_API_KEY
+cp .env.example .env          # set OPENAI_API_KEY, JWT_SECRET
 export PYTHONPATH=app
 uvicorn api.main:app --reload --port 8000
 ```
 
-### 2. Frontend
+**UI**
 
 ```bash
 cd frontend
 cp .env.local.example .env.local
-npm install
-npm run dev
+npm install && npm run dev
 ```
 
-Open **http://localhost:3000**
+Open [http://localhost:3000](http://localhost:3000) → **Data** → upload `datasets/sample/retail_monthly_pl.csv`.
 
-### 3. Try it
-
-1. Go to **Reports** → drag & drop `datasets/sample/retail_monthly_pl.csv`
-2. Explore **Overview**, **Analytics**, **AI Insights**, **Forecast**, **Anomalies**, **AI Assistant**
-
-## Quick start — Streamlit (legacy)
+**Background jobs** (forecasts, scheduled reports):
 
 ```bash
-source .venv/bin/activate
-streamlit run app/streamlit_app.py
+PYTHONPATH=app python -m worker.runner
 ```
 
-Open http://localhost:8501
+## Docker
 
-## Features
+```bash
+cp .env.example .env
+docker compose up --build
+```
 
-| Step | Status | What it does |
-|------|--------|----------------|
-| 1–6 | Done | Upload, KPIs, AI summary, chat, forecast, anomalies, PDF/HTML reports |
-| 7 | Done | Premium Next.js dashboard + SQLite upload history |
+API: `http://localhost:8000` · UI: `http://localhost:3000` · Health: `/health/ready`
 
-## API endpoints
+## Data format
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/health` | Health check |
-| POST | `/api/v1/upload` | Upload CSV/XLSX → full dashboard payload |
-| GET | `/api/v1/sessions` | Recent uploads |
-| GET | `/api/v1/sessions/{id}` | Restore session |
-| POST | `/api/v1/summarize` | Executive summary (OpenAI) |
-| POST | `/api/v1/forecast` | Prophet forecast |
-| POST | `/api/v1/chat` | Tool-based chat |
-| POST | `/api/v1/why-panel` | Explainability rows |
-
-## UI design (Step 7)
-
-- Dark-only fintech aesthetic (`#0B0F19` background)
-- Left sidebar + top header
-- KPI cards, Recharts analytics, AI insight cards
-- Drag-and-drop upload, chat panel, sessions table
-- Subtle glassmorphism, Inter typography, minimal motion
-
-## Data contract
-
-| Column | Required | Description |
-|--------|----------|-------------|
-| `date` | Yes | Month |
-| `revenue` | Yes* | Revenue |
+| Column | Required | Notes |
+|--------|----------|--------|
+| `date` | Yes | Month (e.g. `2024-01-01`) |
+| `revenue` | Yes | Numeric |
 | `cogs`, `opex` | No | Costs |
 | `category`, `amount` | No | Expense breakdown |
+| `budget_revenue`, `budget_opex` | No | Budget vs actual |
 
-Sample files in `datasets/sample/`.
+Samples: `datasets/sample/`
 
 ## Tests
 
 ```bash
-pytest
+export PYTHONPATH=app && pytest
 ```
 
-## Project structure
+## License
 
-```
-app/                    # Python backend
-  api/main.py           # FastAPI
-  analytics/            # ingest, KPIs, charts, forecast, anomalies
-  llm/                   # OpenAI agents
-  reports/              # HTML/PDF reports
-  db/                   # SQLite sessions
-frontend/               # Next.js dashboard (Step 7)
-  src/components/       # UI modules
-datasets/sample/
-tests/
-```
-
-## Roadmap
-
-See [roadmap.txt](roadmap.txt). **Next: Step 8** — deploy with Docker, rate limits, hardening.
+MIT (or specify your license here).
