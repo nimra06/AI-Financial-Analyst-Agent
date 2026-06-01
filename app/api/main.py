@@ -126,6 +126,10 @@ _last_purge_count = 0
 
 import logging
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 app = FastAPI(
     title="AI Financial Analyst API",
     description="Enterprise financial analytics API",
@@ -146,6 +150,8 @@ app.add_middleware(
 @app.on_event("startup")
 def _startup() -> None:
     global _last_purge_count
+    openai_ok = bool(os.environ.get("OPENAI_API_KEY", "").strip())
+    logger.info("OPENAI_API_KEY configured=%s", openai_ok)
     init_db()
     deleted = purge_expired_sessions(RETENTION_DAYS)
     _last_purge_count = len(deleted)
