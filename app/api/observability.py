@@ -15,6 +15,7 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 from db.connection import is_postgres, ping_db
+from api.env_keys import resolve_openai_api_key
 
 _metrics_lock = Lock()
 _request_counts: dict[str, int] = defaultdict(int)
@@ -90,7 +91,7 @@ def get_metrics_text() -> str:
 
 def readiness_status() -> dict[str, Any]:
     db_ok = ping_db()
-    openai_ok = bool(os.environ.get("OPENAI_API_KEY", "").strip())
+    openai_ok = bool(resolve_openai_api_key())
     ready = db_ok and openai_ok
     return {
         "status": "ready" if ready else "degraded",

@@ -30,6 +30,7 @@ from fastapi.responses import PlainTextResponse
 
 from api.auth import AuthError, create_access_token, verify_google_id_token
 from api.deps import get_current_user, require_admin, require_write_access
+from api.env_keys import resolve_openai_api_key
 from api.observability import (
     RequestMetricsMiddleware,
     get_metrics_text,
@@ -126,8 +127,6 @@ _last_purge_count = 0
 
 import logging
 
-import logging
-
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
@@ -150,8 +149,8 @@ app.add_middleware(
 @app.on_event("startup")
 def _startup() -> None:
     global _last_purge_count
-    openai_ok = bool(os.environ.get("OPENAI_API_KEY", "").strip())
-    logger.info("OPENAI_API_KEY configured=%s", openai_ok)
+    openai_ok = bool(resolve_openai_api_key())
+    logger.info("OPENAI_API_KEY configured=%s len=%s", openai_ok, len(resolve_openai_api_key()))
     init_db()
     deleted = purge_expired_sessions(RETENTION_DAYS)
     _last_purge_count = len(deleted)
@@ -217,11 +216,13 @@ def auth_google(body: GoogleAuthRequest) -> AuthResponse:
 
 @app.get("/api/v1/auth/config")
 def auth_config() -> dict[str, Any]:
+    key = resolve_openai_api_key()
     return {
         "google_sso_enabled": bool(os.environ.get("GOOGLE_CLIENT_ID", "").strip()),
         "jwt_enabled": True,
         "demo_login_enabled": True,
-        "openai_configured": bool(os.environ.get("OPENAI_API_KEY", "").strip()),
+        "openai_configured": bool(key),
+        "openai_key_length": len(key),
     }
 
 
@@ -399,7 +400,7 @@ def summarize(
     require_write_access(user)
     _summarize_limiter.check(user["actor"])
 
-    api_key = os.environ.get("OPENAI_API_KEY", "").strip()
+    api_key = resolve_openai_api_key()
     if not api_key:
         raise HTTPException(status_code=503, detail="OPENAI_API_KEY not configured")
     try:
@@ -434,7 +435,7 @@ def chat_endpoint(
     require_write_access(user)
     _chat_limiter.check(user["actor"])
 
-    api_key = os.environ.get("OPENAI_API_KEY", "").strip()
+    api_key = resolve_openai_api_key()
     if not api_key:
         raise HTTPException(status_code=503, detail="OPENAI_API_KEY not configured")
 
