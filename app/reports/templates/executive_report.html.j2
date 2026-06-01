@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>{{ title }}</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: Helvetica, Arial, sans-serif;
+      background: #ffffff;
+      color: #1e293b;
+      margin: 0;
+      padding: 24px;
+      line-height: 1.5;
+      font-size: 13px;
+    }
+    header {
+      border-bottom: 2px solid #3b82f6;
+      padding-bottom: 12px;
+      margin-bottom: 24px;
+    }
+    h1 { margin: 0 0 4px; font-size: 22px; color: #0f172a; }
+    .meta { color: #64748b; font-size: 12px; }
+    h2 {
+      color: #3b82f6;
+      font-size: 16px;
+      margin: 24px 0 10px;
+      border-bottom: 1px solid #cbd5e1;
+      padding-bottom: 4px;
+    }
+    h3 { font-size: 14px; color: #334155; margin-top: 16px; }
+    table.kpi-table { width: 100%; margin: 12px 0; }
+    table.kpi-table td {
+      width: 33%;
+      vertical-align: top;
+      padding: 8px;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+    }
+    .kpi-label { color: #64748b; font-size: 10px; text-transform: uppercase; }
+    .kpi-value { font-size: 18px; font-weight: bold; margin-top: 4px; color: #0f172a; }
+    table.data {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 11px;
+    }
+    table.data th, table.data td {
+      border: 1px solid #cbd5e1;
+      padding: 6px 8px;
+      text-align: left;
+    }
+    table.data th { background: #f1f5f9; color: #475569; }
+    .chart {
+      border: 1px solid #e2e8f0;
+      padding: 12px;
+      margin: 12px 0;
+      page-break-inside: avoid;
+    }
+    .chart img { max-width: 100%; height: auto; }
+    .chart-title { font-weight: bold; margin-bottom: 8px; }
+    ul { padding-left: 18px; }
+    li { margin-bottom: 4px; }
+    .disclaimer {
+      margin-top: 24px;
+      padding: 12px;
+      border: 1px dashed #94a3b8;
+      color: #64748b;
+      font-size: 11px;
+    }
+    .watermark {
+      position: fixed;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-35deg);
+      font-size: 48px;
+      font-weight: bold;
+      color: rgba(148, 163, 184, 0.18);
+      pointer-events: none;
+      z-index: 0;
+      white-space: nowrap;
+    }
+    body > * { position: relative; z-index: 1; }
+    .badge {
+      background: #e2e8f0;
+      padding: 2px 6px;
+      font-size: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="watermark">{{ watermark }}</div>
+  <header>
+    <h1>{{ title }}</h1>
+    <p class="meta">
+      Source: <strong>{{ source_file }}</strong> ·
+      {{ period_count }} months · Latest: <strong>{{ latest_month }}</strong> ·
+      Generated {{ generated_at }}
+    </p>
+  </header>
+
+  <h2>Key performance indicators</h2>
+  <table class="kpi-table">
+    <tr>
+      <td><div class="kpi-label">Latest revenue</div><div class="kpi-value">${{ "{:,.0f}".format(metrics.latest_revenue) }}</div></td>
+      <td><div class="kpi-label">Latest net profit</div><div class="kpi-value">${{ "{:,.0f}".format(metrics.latest_net_profit) }}</div></td>
+      <td><div class="kpi-label">Gross margin</div><div class="kpi-value">{{ "%.1f"|format(metrics.latest_gross_margin_pct) }}%</div></td>
+    </tr>
+    <tr>
+      <td><div class="kpi-label">MoM revenue</div><div class="kpi-value">{% if metrics.mom_revenue_growth_pct is not none %}{{ "%+.1f"|format(metrics.mom_revenue_growth_pct) }}%{% else %}N/A{% endif %}</div></td>
+      <td><div class="kpi-label">3-mo avg revenue</div><div class="kpi-value">${{ "{:,.0f}".format(metrics.avg_revenue_3m) }}</div></td>
+      <td><div class="kpi-label">Total revenue</div><div class="kpi-value">${{ "{:,.0f}".format(metrics.total_revenue) }}</div></td>
+    </tr>
+  </table>
+
+  <h2>Charts</h2>
+  {% for key, label in [('revenue', 'Revenue'), ('profit', 'Profit'), ('expenses', 'Expenses'), ('trends', 'Trends')] %}
+  {% if charts.get(key) %}
+  <div class="chart">
+    <div class="chart-title">{{ label }}</div>
+    <img src="data:image/png;base64,{{ charts[key] }}" alt="{{ label }} chart" />
+  </div>
+  {% endif %}
+  {% endfor %}
+
+  {% if ai %}
+  <h2>AI executive summary</h2>
+  <p>{{ ai.summary }}</p>
+  <h3>Trends</h3>
+  <ul>{% for t in ai.trends %}<li>{{ t }}</li>{% endfor %}</ul>
+  <h3>Risks</h3>
+  <ul>{% for r in ai.risks %}<li>{{ r }}</li>{% endfor %}</ul>
+  <h3>Opportunities</h3>
+  <ul>{% for o in ai.opportunities %}<li>{{ o }}</li>{% endfor %}</ul>
+  <h3>Recommendations</h3>
+  <ul>{% for r in ai.recommendations %}<li>{{ r }}</li>{% endfor %}</ul>
+  {% endif %}
+
+  {% if anomaly_summary.count %}
+  <h2>Anomaly highlights</h2>
+  <p>{{ anomaly_summary.count }} flag(s) · {{ anomaly_summary.high_severity }} high severity</p>
+  <table class="data">
+    <thead>
+      <tr><th>Month</th><th>Metric</th><th>Value</th><th>Method</th><th>Note</th></tr>
+    </thead>
+    <tbody>
+      {% for f in anomaly_flags %}
+      <tr>
+        <td>{{ f.month }}</td>
+        <td>{{ f.metric }}</td>
+        <td>${{ "{:,.0f}".format(f.value) }}</td>
+        <td><span class="badge">{{ f.method }}</span></td>
+        <td>{{ f.description }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  <h2>Explainability — why these numbers?</h2>
+  <table class="data">
+    <thead>
+      <tr><th>Metric</th><th>Value</th><th>Period</th><th>How it was calculated</th></tr>
+    </thead>
+    <tbody>
+      {% for row in why_panel %}
+      <tr>
+        <td>{{ row.metric }} <span class="badge">{{ row.category }}</span></td>
+        <td>{{ row.value }}</td>
+        <td>{{ row.period }}</td>
+        <td>{{ row.formula_hint }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="disclaimer">{{ disclaimer }}</div>
+</body>
+</html>

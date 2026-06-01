@@ -1,0 +1,63 @@
+# {{ title }}
+
+> **{{ watermark }}**
+
+**Source:** {{ source_file }} · **Periods:** {{ period_count }} · **Latest:** {{ latest_month }}  
+**Generated:** {{ generated_at }}
+
+---
+
+## Key performance indicators
+
+| Metric | Value |
+|--------|-------|
+| Latest revenue | ${{ "{:,.0f}".format(metrics.latest_revenue) }} |
+| Latest net profit | ${{ "{:,.0f}".format(metrics.latest_net_profit) }} |
+| Gross margin | {{ "%.1f"|format(metrics.latest_gross_margin_pct) }}% |
+| MoM revenue | {% if metrics.mom_revenue_growth_pct is not none %}{{ "%+.1f"|format(metrics.mom_revenue_growth_pct) }}%{% else %}N/A{% endif %} |
+| 3-mo avg revenue | ${{ "{:,.0f}".format(metrics.avg_revenue_3m) }} |
+| Total revenue | ${{ "{:,.0f}".format(metrics.total_revenue) }} |
+
+{% if ai %}
+## AI executive summary
+
+{{ ai.summary }}
+
+### Trends
+{% for t in ai.trends %}- {{ t }}
+{% endfor %}
+
+### Risks
+{% for r in ai.risks %}- {{ r }}
+{% endfor %}
+
+### Opportunities
+{% for o in ai.opportunities %}- {{ o }}
+{% endfor %}
+
+### Recommendations
+{% for r in ai.recommendations %}- {{ r }}
+{% endfor %}
+{% endif %}
+
+{% if anomaly_summary.count %}
+## Anomaly highlights
+
+{{ anomaly_summary.count }} flag(s) detected ({{ anomaly_summary.high_severity }} high severity).
+
+| Month | Metric | Value | Method |
+|-------|--------|-------|--------|
+{% for f in anomaly_flags %}| {{ f.month }} | {{ f.metric }} | ${{ "{:,.0f}".format(f.value) }} | {{ f.method }} |
+{% endfor %}
+{% endif %}
+
+## Explainability — why these numbers?
+
+| Metric | Value | Period | Formula |
+|--------|-------|--------|---------|
+{% for row in why_panel %}| {{ row.metric }} | {{ row.value }} | {{ row.period }} | {{ row.formula_hint }} |
+{% endfor %}
+
+---
+
+*{{ disclaimer }}*
