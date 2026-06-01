@@ -47,6 +47,9 @@ export function clearAccessToken(): void {
 export function clearAuthSession(): void {
   clearDemoUser();
   clearAccessToken();
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("finanalyst:session-expired"));
+  }
 }
 
 export const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";

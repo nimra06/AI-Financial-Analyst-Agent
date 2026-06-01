@@ -11,7 +11,7 @@ import type {
   WhyInsight,
 } from "@/types/dashboard";
 import type { DemoUser } from "@/lib/auth";
-import { readAccessToken, readDemoUser } from "@/lib/auth";
+import { readAccessToken, readDemoUser, clearAuthSession } from "@/lib/auth";
 
 /** Absolute API origin — adds https:// if the env var omits a protocol. */
 function normalizeApiBase(raw: string | undefined): string {
@@ -67,16 +67,31 @@ function authHeaders(extra?: Record<string, string>): Record<string, string> {
   return headers;
 }
 
+function apiErrorMessage(err: unknown, fallback: string): string {
+  if (typeof err === "object" && err !== null && "detail" in err) {
+    const detail = (err as { detail: unknown }).detail;
+    if (typeof detail === "string") return detail;
+  }
+  return fallback;
+}
+
+function handleUnauthorized(res: Response, errBody: unknown): void {
+  if (res.status !== 401 || !readAccessToken()) return;
+  clearAuthSession();
+  const detail = apiErrorMessage(errBody, "");
+  if (detail.toLowerCase().includes("token")) {
+    throw new Error("Session expired. Please sign in again.");
+  }
+  throw new Error("Please sign in again.");
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = { ...authHeaders(), ...(init?.headers as Record<string, string>) };
   const res = await fetch(`${API_BASE}${path}`, { ...init, headers });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(
-      typeof err.detail === "string"
-        ? err.detail
-        : JSON.stringify(err.detail ?? err)
-    );
+    handleUnauthorized(res, err);
+    throw new Error(apiErrorMessage(err, res.statusText));
   }
   return res.json() as Promise<T>;
 }
@@ -107,11 +122,8 @@ export async function uploadFile(file: File): Promise<DashboardData> {
   }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(
-      typeof err.detail === "string"
-        ? err.detail
-        : JSON.stringify(err.detail ?? err)
-    );
+    handleUnauthorized(res, err);
+    throw new Error(apiErrorMessage(err, res.statusText));
   }
   const data = (await res.json()) as { dashboard: DashboardData };
   return data.dashboard;
@@ -131,11 +143,8 @@ export async function getSession(
   const res = await fetch(`${API_BASE}/api/v1/sessions/${sessionId}`, { headers });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(
-      typeof err.detail === "string"
-        ? err.detail
-        : JSON.stringify(err.detail ?? err)
-    );
+    handleUnauthorized(res, err);
+    throw new Error(apiErrorMessage(err, res.statusText));
   }
   return res.json() as Promise<DashboardData>;
 }

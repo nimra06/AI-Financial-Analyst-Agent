@@ -35,6 +35,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
     }
     setReady(true);
+
+    const onExpired = () => setUser(null);
+    window.addEventListener("finanalyst:session-expired", onExpired);
+    return () => window.removeEventListener("finanalyst:session-expired", onExpired);
   }, []);
 
   const signIn = useCallback(
