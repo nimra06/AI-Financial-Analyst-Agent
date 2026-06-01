@@ -13,7 +13,16 @@ import type {
 import type { DemoUser } from "@/lib/auth";
 import { readAccessToken, readDemoUser } from "@/lib/auth";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+/** Absolute API origin — adds https:// if the env var omits a protocol. */
+function normalizeApiBase(raw: string | undefined): string {
+  const fallback = "http://localhost:8000";
+  const value = (raw ?? fallback).trim();
+  if (!value) return fallback;
+  if (/^https?:\/\//i.test(value)) return value.replace(/\/$/, "");
+  return `https://${value.replace(/^\/+/, "").replace(/\/$/, "")}`;
+}
+
+const API_BASE = normalizeApiBase(process.env.NEXT_PUBLIC_API_URL);
 
 export class UploadValidationError extends Error {
   errors: string[];
