@@ -17,7 +17,7 @@ Upload monthly P&L data and get validated KPIs, forecasts, anomaly flags, and AI
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-full.txt
 cp .env.example .env          # set OPENAI_API_KEY, JWT_SECRET
 export PYTHONPATH=app
 uvicorn api.main:app --reload --port 8000
@@ -65,7 +65,3 @@ Samples: `datasets/sample/`
 ```bash
 export PYTHONPATH=app && pytest
 ```
-
-## License
-
-MIT (or specify your license here).
