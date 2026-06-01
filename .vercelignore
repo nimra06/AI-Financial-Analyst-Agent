@@ -1,0 +1,10 @@
+app/
+tests/
+datasets/
+notebooks/
+requirements-api.txt
+requirements-full.txt
+Dockerfile.api
+docker-compose.yml
+.venv/
+data/

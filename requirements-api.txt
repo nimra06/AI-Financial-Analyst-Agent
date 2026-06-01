@@ -1,5 +1,5 @@
-# API / Vercel (no Prophet, Streamlit, xhtml2pdf — avoids cairo system libs).
-# Local full install: pip install -r requirements-full.txt
+# FastAPI server (Railway/Render/Docker). Not used by Vercel UI deploy.
+# Local full stack: pip install -r requirements-full.txt
 
 pandas>=2.2.0
 numpy>=1.26.0
