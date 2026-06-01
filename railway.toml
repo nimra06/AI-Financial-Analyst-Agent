@@ -1,0 +1,11 @@
+# Railway — API service (use Dockerfile; do not use Railpack auto-detect).
+# In the dashboard: one service from this repo, root directory = repository root.
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile.api"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 120
+restartPolicyType = "on_failure"
