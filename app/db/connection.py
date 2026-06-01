@@ -9,7 +9,28 @@ from pathlib import Path
 from typing import Any, Iterator
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
-SQLITE_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "sessions.db"
+
+
+def _is_serverless_runtime() -> bool:
+    """Vercel / AWS Lambda: filesystem is read-only except /tmp."""
+    return bool(
+        os.environ.get("VERCEL")
+        or os.environ.get("VERCEL_ENV")
+        or os.environ.get("AWS_LAMBDA_FUNCTION_NAME")
+    )
+
+
+def _sqlite_path() -> Path:
+    if _is_serverless_runtime():
+        import tempfile
+
+        root = Path(tempfile.gettempdir()) / "finanalyst"
+        root.mkdir(parents=True, exist_ok=True)
+        return root / "sessions.db"
+    return Path(__file__).resolve().parent.parent.parent / "data" / "sessions.db"
+
+
+SQLITE_PATH = _sqlite_path()
 
 
 def is_postgres() -> bool:
@@ -23,8 +44,9 @@ def adapt_sql(sql: str) -> str:
 
 
 def _sqlite_conn() -> sqlite3.Connection:
-    SQLITE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(SQLITE_PATH), check_same_thread=False)
+    path = _sqlite_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(path), check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn
 

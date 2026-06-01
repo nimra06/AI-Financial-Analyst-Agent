@@ -121,6 +121,8 @@ _chat_limiter = RateLimiter(CHAT_RATE_LIMIT, 60)
 _summarize_limiter = RateLimiter(SUMMARIZE_RATE_LIMIT, 60)
 _last_purge_count = 0
 
+import logging
+
 app = FastAPI(
     title="AI Financial Analyst API",
     description="Enterprise financial analytics API",
