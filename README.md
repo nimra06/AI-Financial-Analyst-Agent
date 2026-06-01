@@ -63,11 +63,12 @@ Samples: `datasets/sample/`
 ## Deploy
 
 ### Frontend — Vercel
-- **Root Directory:** `frontend` (not repo root)
-- **Env:** `NEXT_PUBLIC_API_URL` = `https://ai-financial-analyst-agent-production.up.railway.app` (your Railway URL, no trailing slash)
-- Do **not** deploy the API on Vercel — use Railway below.
+- **Root Directory:** `frontend` (required — not repo root)
+- **Install Command:** leave empty, or use `npm install` (do **not** use `pip install`)
+- **Env:** `NEXT_PUBLIC_API_URL` = `https://ai-financial-analyst-agent-production.up.railway.app`
+- If build still runs `pip install`, open **Settings → General → Install Command** → clear it → redeploy
 
-### Backend — Railway
+### Backend — Railway only
 - **Builder:** Dockerfile → `Dockerfile.api` (see `railway.toml`)
 - **Env:** `OPENAI_API_KEY`, `JWT_SECRET`; optional `DATABASE_URL` (Postgres plugin)
 - **Health:** `GET /health` → `{"status":"ok"}`
