@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-white/5;
+  }
+
+  body {
+    @apply bg-background text-text-primary antialiased;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #374151;
+    border-radius: 4px;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply border border-white/[0.06] bg-white/[0.03] backdrop-blur-md;
+  }
+
+  .glass-card {
+    @apply rounded-2xl border border-white/[0.06] bg-card/80 shadow-card backdrop-blur-sm;
+  }
+}
