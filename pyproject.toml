@@ -3,9 +3,6 @@ name = "ai-financial-analyst-api"
 version = "0.7.0"
 requires-python = ">=3.11"
 
-[tool.vercel]
-entrypoint = "app.api.main:app"
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["app"]

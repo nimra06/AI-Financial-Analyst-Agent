@@ -63,20 +63,14 @@ Samples: `datasets/sample/`
 ## Deploy
 
 ### Frontend — Vercel
-- **Root Directory:** `frontend`
-- **Env:** `NEXT_PUBLIC_API_URL` = your Railway API URL
+- **Root Directory:** `frontend` (not repo root)
+- **Env:** `NEXT_PUBLIC_API_URL` = `https://ai-financial-analyst-agent-production.up.railway.app` (your Railway URL, no trailing slash)
+- Do **not** deploy the API on Vercel — use Railway below.
 
-### Backend — Railway (recommended)
-Railpack often mis-detects this repo (Django/gunicorn). Use **Docker** instead.
-
-1. Push `railway.toml` + `Dockerfile.api` (in this repo).
-2. Railway → **New Project** → **Deploy from GitHub** → this repo.
-3. **Settings → Build:** Builder = **Dockerfile**, path = **`Dockerfile.api`** (or rely on `railway.toml`).
-4. **Variables:** `OPENAI_API_KEY`, `JWT_SECRET`; optional `DATABASE_URL` (add Railway Postgres plugin).
-5. **Networking** → generate domain → e.g. `https://xxx.up.railway.app`
-6. Set Vercel `NEXT_PUBLIC_API_URL` to that URL (no trailing slash).
-
-**Health check:** `GET /health` should return `{"status":"ok"}`.
+### Backend — Railway
+- **Builder:** Dockerfile → `Dockerfile.api` (see `railway.toml`)
+- **Env:** `OPENAI_API_KEY`, `JWT_SECRET`; optional `DATABASE_URL` (Postgres plugin)
+- **Health:** `GET /health` → `{"status":"ok"}`
 
 ## Tests
 

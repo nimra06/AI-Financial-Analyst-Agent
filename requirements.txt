@@ -1,2 +1,0 @@
-# Vercel API project (repo root). Full local/Docker stack: requirements-full.txt
--r requirements-api.txt
