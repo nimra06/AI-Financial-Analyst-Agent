@@ -11,6 +11,12 @@ import { InsightsPanel } from "@/components/dashboard/InsightsPanel";
 import { ForecastPanel } from "@/components/dashboard/ForecastPanel";
 import { AnomaliesPanel } from "@/components/dashboard/AnomaliesPanel";
 import { PlanningPanel } from "@/components/dashboard/PlanningPanel";
+import {
+  FreelanceAnalytics,
+  FreelanceInsights,
+  FreelanceMonthlyRequired,
+  FreelanceOverview,
+} from "@/components/dashboard/FreelanceViews";
 import { DataHub } from "@/components/dashboard/DataHub";
 import { WhyPanel } from "@/components/dashboard/WhyPanel";
 import { useDashboard } from "@/context/DashboardContext";
@@ -18,8 +24,22 @@ import { fetchWhyPanel } from "@/lib/api";
 import type { WhyInsight } from "@/types/dashboard";
 
 export function DashboardView() {
-  const { dashboard, activeSection, error, workspaceLoading } = useDashboard();
+  const {
+    dashboard,
+    activeSection,
+    error,
+    workspaceLoading,
+    uploadValidation,
+    setChatOpen,
+  } = useDashboard();
   const [why, setWhy] = useState<WhyInsight[]>([]);
+
+  const hasFreelance = Boolean(
+    uploadValidation?.freelance_summary &&
+      uploadValidation.detected_format === "freelance_client_billing"
+  );
+
+  const openChat = () => setChatOpen(true);
 
   useEffect(() => {
     if (dashboard) {
@@ -37,6 +57,25 @@ export function DashboardView() {
 
   if (activeSection === "data") {
     return <DataHub />;
+  }
+
+  if (!dashboard && hasFreelance && uploadValidation) {
+    switch (activeSection) {
+      case "overview":
+        return <FreelanceOverview validation={uploadValidation} onAskAi={openChat} />;
+      case "analytics":
+        return <FreelanceAnalytics validation={uploadValidation} />;
+      case "insights":
+        return <FreelanceInsights validation={uploadValidation} onAskAi={openChat} />;
+      case "forecast":
+        return <FreelanceMonthlyRequired section="forecast" />;
+      case "anomalies":
+        return <FreelanceMonthlyRequired section="anomalies" />;
+      case "planning":
+        return <FreelanceMonthlyRequired section="planning" />;
+      default:
+        return <FreelanceOverview validation={uploadValidation} onAskAi={openChat} />;
+    }
   }
 
   if (!dashboard) {

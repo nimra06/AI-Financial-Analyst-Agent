@@ -16,7 +16,7 @@ const config: Config = {
         warning: "#F59E0B",
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "Inter", "system-ui", "sans-serif"],
+        sans: ["system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
       },
       boxShadow: {
         card: "0 4px 24px rgba(0, 0, 0, 0.35)",

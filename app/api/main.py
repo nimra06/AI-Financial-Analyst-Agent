@@ -2,8 +2,15 @@
 
 from __future__ import annotations
 
-import os
 import sys
+from pathlib import Path
+
+# Local dev uses PYTHONPATH=app; Vercel loads app.api.main:app from repo root.
+_APP_ROOT = Path(__file__).resolve().parent.parent
+if str(_APP_ROOT) not in sys.path:
+    sys.path.insert(0, str(_APP_ROOT))
+
+import os
 from typing import Annotated, Any
 
 # Required for POST /api/v1/upload (File uploads) — fail fast with a clear message
@@ -83,6 +90,7 @@ from schemas.tier3 import (
     ScheduledReportRecord,
 )
 from llm.chat import ChatError, run_chat_from_snapshot_payload
+from llm.chat_advisory import run_advisory_chat
 from llm.summarize import SummaryError, generate_executive_summary
 from llm.agent_tools import context_from_monthly_records
 from reports.explainability import build_why_panel
@@ -352,6 +360,9 @@ async def upload_file(
                 "errors": result.errors,
                 "warnings": result.warnings,
                 "row_count": result.row_count,
+                "detected_format": result.detected_format,
+                "freelance_insights": result.freelance_insights,
+                "freelance_summary": result.freelance_summary,
             },
         )
 
@@ -411,38 +422,45 @@ def chat_endpoint(
     require_write_access(user)
     _chat_limiter.check(user["actor"])
 
-    if not body.monthly_records:
-        raise HTTPException(status_code=400, detail="monthly_records is required")
-    if not body.session_id:
-        raise HTTPException(status_code=400, detail="session_id is required")
-
     api_key = os.environ.get("OPENAI_API_KEY", "").strip()
     if not api_key:
         raise HTTPException(status_code=503, detail="OPENAI_API_KEY not configured")
 
-    stored = get_chat_messages(body.session_id)
+    session_id = body.session_id or "advisory"
+    use_dataset = bool(body.monthly_records) and body.mode == "dataset"
+    freelance_ctx = body.freelance_summary if body.mode in ("freelance", "advisory") else None
+
+    stored = get_chat_messages(session_id) if session_id else []
     history: list[ChatTurn] = [
         ChatTurn(role=m["role"], content=m["content"]) for m in stored
     ]
     if not history and body.history:
         history = body.history
 
-    save_chat_message(body.session_id, "user", body.message)
+    save_chat_message(session_id, "user", body.message)
 
     try:
-        result = run_chat_from_snapshot_payload(
-            body.message,
-            body.monthly_records,
-            top_expense_categories=body.top_expense_categories,
-            source_file=body.source_file,
-            history=history,
-            api_key=api_key,
-        )
+        if use_dataset:
+            result = run_chat_from_snapshot_payload(
+                body.message,
+                body.monthly_records,
+                top_expense_categories=body.top_expense_categories,
+                source_file=body.source_file,
+                history=history,
+                api_key=api_key,
+            )
+        else:
+            result = run_advisory_chat(
+                body.message,
+                history=history,
+                freelance_summary=freelance_ctx or body.freelance_summary,
+                api_key=api_key,
+            )
     except ChatError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
     save_chat_message(
-        body.session_id,
+        session_id,
         "assistant",
         result.answer,
         sources=result.sources,
@@ -451,10 +469,10 @@ def chat_endpoint(
     log_audit_event(
         "chat",
         user["actor"],
-        session_id=body.session_id,
+        session_id=session_id if use_dataset else None,
         detail={
             "question_preview": body.message[:120],
-            "sources": result.sources[:8],
+            "mode": "dataset" if use_dataset else ("freelance" if freelance_ctx else "advisory"),
             "role": user["role"],
         },
     )

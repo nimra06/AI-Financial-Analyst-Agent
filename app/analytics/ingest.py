@@ -10,6 +10,7 @@ from typing import BinaryIO, Optional, Union
 import pandas as pd
 from pydantic import ValidationError
 
+from analytics.format_detect import build_wrong_format_validation
 from schemas.financial import FinancialRow, ValidationResult
 
 COLUMN_ALIASES: dict[str, list[str]] = {
@@ -112,12 +113,15 @@ def validate_rows(df: pd.DataFrame) -> tuple[list[FinancialRow], ValidationResul
     rows: list[FinancialRow] = []
 
     if "date" not in df.columns:
+        errors, warnings, fmt, summary = build_wrong_format_validation(df)
         return [], ValidationResult(
             ok=False,
-            errors=[
-                "Missing required column: date (aliases: period, month, reporting_period)"
-            ],
+            errors=errors,
+            warnings=warnings,
             row_count=len(df),
+            detected_format=fmt,
+            freelance_insights=summary.get("insights", []) if summary else [],
+            freelance_summary=summary,
         )
 
     has_revenue = "revenue" in df.columns
@@ -255,13 +259,17 @@ def load_and_clean(upload: Union[BinaryIO, bytes], filename: str) -> IngestResul
     preview = df.head(10).copy()
 
     if "date" not in df.columns:
+        errors, warnings, fmt, summary = build_wrong_format_validation(
+            raw, filename=filename
+        )
         return ValidationResult(
             ok=False,
-            errors=[
-                "Missing required column: date. Expected headers like: "
-                "date, revenue, cogs, opex (see README)."
-            ],
-            row_count=len(df),
+            errors=errors,
+            warnings=warnings,
+            row_count=len(raw),
+            detected_format=fmt,
+            freelance_insights=summary.get("insights", []) if summary else [],
+            freelance_summary=summary,
         )
 
     df["date"] = _parse_dates(df["date"])

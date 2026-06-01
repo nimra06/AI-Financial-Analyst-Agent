@@ -127,16 +127,59 @@ function ChartCard({
   children,
 }: {
   title: string;
-  description: string;
+  description?: string;
   children: React.ReactNode;
 }) {
   return (
     <Card className="overflow-hidden">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+        {description ? <CardDescription>{description}</CardDescription> : null}
       </CardHeader>
       <CardContent>{children}</CardContent>
     </Card>
+  );
+}
+
+export function ClientBillingChart({
+  data,
+  title = "Client billing",
+  description,
+}: {
+  data: { name: string; amount: number }[];
+  title?: string;
+  description?: string;
+}) {
+  const chartData = data.map((d) => ({
+    client: d.name.length > 18 ? `${d.name.slice(0, 16)}…` : d.name,
+    fullName: d.name,
+    amount: d.amount,
+  }));
+
+  return (
+    <ChartCard title={title} description={description}>
+      <ResponsiveContainer width="100%" height={Math.max(240, chartData.length * 36)}>
+        <BarChart data={chartData} layout="vertical" margin={{ left: 8, right: 16 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#374151" horizontal={false} />
+          <XAxis type="number" tick={{ fill: "#9CA3AF", fontSize: 11 }} axisLine={false} tickLine={false} />
+          <YAxis
+            type="category"
+            dataKey="client"
+            width={120}
+            tick={{ fill: "#9CA3AF", fontSize: 11 }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <Tooltip
+            contentStyle={tooltipStyle}
+            formatter={(value: number) => [`$${value.toLocaleString()}`, "Billed"]}
+            labelFormatter={(_, payload) =>
+              payload?.[0]?.payload?.fullName ?? ""
+            }
+          />
+          <Bar dataKey="amount" fill="#F59E0B" radius={[0, 6, 6, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </ChartCard>
   );
 }

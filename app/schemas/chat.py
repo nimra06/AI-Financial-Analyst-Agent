@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -29,11 +29,13 @@ class ChatMessageRecord(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str
-    session_id: str
+    session_id: str = "advisory"
     history: list[ChatTurn] = Field(default_factory=list)
-    monthly_records: list[dict]
+    monthly_records: list[dict] = Field(default_factory=list)
     top_expense_categories: list[dict] = Field(default_factory=list)
     source_file: str = "upload"
+    freelance_summary: Optional[dict[str, Any]] = None
+    mode: Literal["dataset", "advisory", "freelance"] = "dataset"
 
 
 class ChatResponse(BaseModel):

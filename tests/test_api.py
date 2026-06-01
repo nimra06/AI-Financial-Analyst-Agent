@@ -74,6 +74,7 @@ def test_chat_persistence() -> None:
                     "session_id": session_id,
                     "monthly_records": up.json()["dashboard"]["monthly_records"],
                     "source_file": path.name,
+                    "mode": "dataset",
                 },
             )
     assert chat.status_code == 200

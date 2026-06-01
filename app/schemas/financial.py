@@ -46,3 +46,9 @@ class ValidationResult(BaseModel):
     errors: list[str] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
     row_count: int = 0
+    detected_format: Optional[str] = Field(
+        default=None,
+        description="monthly_pl | freelance_client_billing | unknown",
+    )
+    freelance_insights: list[str] = Field(default_factory=list)
+    freelance_summary: Optional[dict] = None

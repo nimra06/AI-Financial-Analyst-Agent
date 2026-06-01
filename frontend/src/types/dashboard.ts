@@ -93,10 +93,25 @@ export interface WhyInsight {
   category: string;
 }
 
+export interface FreelanceClientRow {
+  client: string;
+  amount: number;
+  share_pct: number;
+}
+
 export interface UploadValidation {
   errors: string[];
   warnings: string[];
   row_count: number;
+  detected_format?: string | null;
+  freelance_insights?: string[];
+  freelance_summary?: {
+    insights?: string[];
+    clients?: FreelanceClientRow[];
+    total_lifetime?: number;
+    client_count?: number;
+    top_clients?: FreelanceClientRow[];
+  } | null;
 }
 
 export interface ReportPayload {

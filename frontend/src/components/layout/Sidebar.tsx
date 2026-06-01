@@ -23,7 +23,12 @@ const NAV = [
 ];
 
 export function Sidebar() {
-  const { activeSection, setActiveSection, dashboard } = useDashboard();
+  const { activeSection, setActiveSection, dashboard, uploadValidation } = useDashboard();
+  const hasFreelance = Boolean(
+    uploadValidation?.freelance_summary &&
+      uploadValidation.detected_format === "freelance_client_billing"
+  );
+  const canUseSections = Boolean(dashboard || hasFreelance);
 
   return (
     <aside className="flex h-full w-64 flex-col border-r border-white/[0.06] bg-surface/80 backdrop-blur-xl">
@@ -42,14 +47,14 @@ export function Sidebar() {
           <button
             key={id}
             type="button"
-            disabled={!dashboard && id !== "overview" && id !== "data"}
+            disabled={!canUseSections && id !== "overview" && id !== "data"}
             onClick={() => setActiveSection(id)}
             className={cn(
               "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
               activeSection === id
                 ? "bg-accent/15 text-text-primary ring-1 ring-accent/25"
                 : "text-text-secondary hover:bg-white/5 hover:text-text-primary",
-              !dashboard && id !== "overview" && id !== "data" && "opacity-40"
+              !canUseSections && id !== "overview" && id !== "data" && "opacity-40"
             )}
           >
             <Icon className="h-4 w-4 shrink-0" />

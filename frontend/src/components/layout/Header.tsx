@@ -7,7 +7,8 @@ import { AlertsDropdown } from "@/components/layout/AlertsDropdown";
 import { useDashboard } from "@/context/DashboardContext";
 
 export function Header() {
-  const { dashboard } = useDashboard();
+  const { dashboard, uploadValidation } = useDashboard();
+  const hasFreelance = Boolean(uploadValidation?.freelance_summary);
 
   return (
     <header className="flex h-16 items-center justify-between gap-4 border-b border-white/[0.06] bg-background/60 px-6 backdrop-blur-md lg:px-8">
@@ -25,8 +26,10 @@ export function Header() {
           <span className="text-sm text-text-secondary">Search metrics…</span>
         </div>
         <AlertsDropdown />
-        <Badge variant={dashboard ? "success" : "muted"}>
-          {dashboard ? "Live" : "No data"}
+        <Badge
+          variant={dashboard ? "success" : hasFreelance ? "warning" : "muted"}
+        >
+          {dashboard ? "Live" : hasFreelance ? "Billing insights" : "No data"}
         </Badge>
         <UserMenu />
       </div>

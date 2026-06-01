@@ -24,8 +24,11 @@ import {
 } from "@/lib/api";
 import {
   clearActiveSession,
+  clearFreelanceValidation,
   persistActiveSession,
+  persistFreelanceValidation,
   readActiveSessionId,
+  readFreelanceValidation,
 } from "@/lib/workspace";
 
 interface DashboardContextValue {
@@ -86,6 +89,13 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  useEffect(() => {
+    const key = uploadValidation?.freelance_summary
+      ? "advisory-freelance"
+      : dashboard?.session_id ?? "advisory";
+    loadChatHistory(key);
+  }, [dashboard?.session_id, uploadValidation?.freelance_summary, loadChatHistory]);
+
   const initWorkspace = useCallback(async () => {
     setWorkspaceLoading(true);
     setError(null);
@@ -96,6 +106,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         setDashboard(null);
         setChatMessages([]);
         clearActiveSession();
+        const storedFreelance = readFreelanceValidation();
+        setUploadValidation(storedFreelance);
         return;
       }
       const stored = readActiveSessionId();
@@ -105,6 +117,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
           : list[0].session_id;
       const data = await getSession(sessionId, { skipAudit: true });
       setDashboard(data);
+      setUploadValidation(null);
+      clearFreelanceValidation();
       persistActiveSession(sessionId);
       await loadChatHistory(sessionId);
     } catch {
@@ -128,6 +142,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       try {
         const data = await uploadFile(file);
         setDashboard(data);
+        setUploadValidation(null);
+        clearFreelanceValidation();
         persistActiveSession(data.session_id);
         setChatMessages([]);
         await refreshSessions();
@@ -138,8 +154,23 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
             errors: e.errors,
             warnings: e.warnings,
             row_count: e.rowCount,
+            detected_format: e.detectedFormat,
+            freelance_insights: e.freelanceInsights,
+            freelance_summary: e.freelanceSummary,
           });
-          setActiveSection("data");
+          if (e.freelanceSummary) {
+            persistFreelanceValidation({
+              errors: e.errors,
+              warnings: e.warnings,
+              row_count: e.rowCount,
+              detected_format: e.detectedFormat,
+              freelance_insights: e.freelanceInsights,
+              freelance_summary: e.freelanceSummary,
+            });
+          }
+          setActiveSection(
+            e.detectedFormat === "freelance_client_billing" ? "overview" : "data"
+          );
         } else {
           setError(e instanceof Error ? e.message : "Upload failed");
         }
@@ -155,6 +186,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
       setUploadValidation(null);
+      clearFreelanceValidation();
       try {
         const data = await getSession(id);
         setDashboard(data);
@@ -215,12 +247,27 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
 
   const askChat = useCallback(
     async (message: string) => {
-      if (!dashboard) return;
       const userMsg: ChatMessage = { role: "user", content: message };
       setChatMessages((prev) => [...prev, userMsg]);
       setLoading(true);
+
+      const sessionId = uploadValidation?.freelance_summary
+        ? "advisory-freelance"
+        : dashboard?.session_id ?? "advisory";
+      const mode = uploadValidation?.freelance_summary
+        ? "freelance"
+        : dashboard
+          ? "dataset"
+          : "advisory";
+
       try {
-        const result = await sendChat(message, dashboard, chatMessages);
+        const result = await sendChat(message, {
+          sessionId,
+          history: chatMessages,
+          mode,
+          dashboard: dashboard ?? undefined,
+          freelanceSummary: uploadValidation?.freelance_summary ?? undefined,
+        });
         setChatMessages((prev) => [
           ...prev,
           {
@@ -234,30 +281,32 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
           ...prev,
           {
             role: "assistant",
-            content: `Error: ${e instanceof Error ? e.message : "Chat failed"}`,
+            content: `Sorry, I couldn't respond: ${e instanceof Error ? e.message : "Chat failed"}`,
           },
         ]);
       } finally {
         setLoading(false);
       }
     },
-    [dashboard, chatMessages]
+    [dashboard, chatMessages, uploadValidation]
   );
 
   const clearChat = useCallback(async () => {
-    if (!dashboard) {
-      setChatMessages([]);
-      return;
-    }
+    const sessionId = uploadValidation?.freelance_summary
+      ? "advisory-freelance"
+      : dashboard?.session_id ?? "advisory";
     try {
-      await clearChatHistory(dashboard.session_id);
+      if (sessionId) await clearChatHistory(sessionId);
     } catch {
       /* ignore */
     }
     setChatMessages([]);
-  }, [dashboard]);
+  }, [dashboard, uploadValidation]);
 
-  const clearUploadValidation = useCallback(() => setUploadValidation(null), []);
+  const clearUploadValidation = useCallback(() => {
+    setUploadValidation(null);
+    clearFreelanceValidation();
+  }, []);
 
   return (
     <DashboardContext.Provider

@@ -18,6 +18,7 @@ export function DataHub() {
     dashboard,
     uploadValidation,
     clearUploadValidation,
+    setChatOpen,
   } = useDashboard();
 
   useEffect(() => {
@@ -71,6 +72,9 @@ export function DataHub() {
             <ValidationPanel
               validation={uploadValidation}
               onDismiss={clearUploadValidation}
+              onAskAi={() => {
+                setChatOpen(true);
+              }}
             />
           )}
           <FileUpload />

@@ -19,13 +19,27 @@ export class UploadValidationError extends Error {
   errors: string[];
   warnings: string[];
   rowCount: number;
+  detectedFormat?: string | null;
+  freelanceInsights: string[];
+  freelanceSummary?: UploadValidation["freelance_summary"];
 
-  constructor(errors: string[], warnings: string[], rowCount: number) {
+  constructor(
+    errors: string[],
+    warnings: string[],
+    rowCount: number,
+    extra?: Pick<
+      UploadValidation,
+      "detected_format" | "freelance_insights" | "freelance_summary"
+    >
+  ) {
     super(errors[0] ?? "Validation failed");
     this.name = "UploadValidationError";
     this.errors = errors;
     this.warnings = warnings;
     this.rowCount = rowCount;
+    this.detectedFormat = extra?.detected_format;
+    this.freelanceInsights = extra?.freelance_insights ?? [];
+    this.freelanceSummary = extra?.freelance_summary ?? undefined;
   }
 }
 
@@ -73,7 +87,12 @@ export async function uploadFile(file: File): Promise<DashboardData> {
       throw new UploadValidationError(
         detail.errors,
         detail.warnings ?? [],
-        detail.row_count ?? 0
+        detail.row_count ?? 0,
+        {
+          detected_format: detail.detected_format,
+          freelance_insights: detail.freelance_insights,
+          freelance_summary: detail.freelance_summary,
+        }
       );
     }
   }
@@ -166,24 +185,37 @@ export async function generateForecast(
   return res.forecast;
 }
 
+export type ChatMode = "dataset" | "advisory" | "freelance";
+
 export async function sendChat(
   message: string,
-  dashboard: DashboardData,
-  history: ChatMessage[]
+  options: {
+    sessionId: string;
+    history: ChatMessage[];
+    mode: ChatMode;
+    dashboard?: DashboardData;
+    freelanceSummary?: UploadValidation["freelance_summary"];
+  }
 ): Promise<{ answer: string; sources: string[]; chart?: string }> {
+  const { sessionId, history, mode, dashboard, freelanceSummary } = options;
+  const body: Record<string, unknown> = {
+    message,
+    session_id: sessionId,
+    mode,
+    history: history.map((m) => ({ role: m.role, content: m.content })),
+    monthly_records: dashboard?.monthly_records ?? [],
+    top_expense_categories: dashboard?.top_expense_categories ?? [],
+    source_file: dashboard?.source_file ?? "upload",
+  };
+  if (freelanceSummary) {
+    body.freelance_summary = freelanceSummary;
+  }
   const res = await request<{
     result: { answer: string; sources: string[]; chart?: string };
   }>("/api/v1/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: JSON.stringify({
-      message,
-      session_id: dashboard.session_id,
-      monthly_records: dashboard.monthly_records,
-      top_expense_categories: dashboard.top_expense_categories,
-      source_file: dashboard.source_file,
-      history: history.map((m) => ({ role: m.role, content: m.content })),
-    }),
+    body: JSON.stringify(body),
   });
   return res.result;
 }
