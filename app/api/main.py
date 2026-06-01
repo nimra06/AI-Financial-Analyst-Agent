@@ -111,7 +111,10 @@ from schemas.dashboard import (
 from schemas.financial import ValidationResult
 from analytics.forecasting import ForecastError
 
-load_dotenv()
+# Local .env only — never override Railway/production env vars (override=False).
+_env_path = Path(__file__).resolve().parent.parent.parent / ".env"
+if _env_path.is_file():
+    load_dotenv(_env_path, override=False)
 
 RETENTION_DAYS = int(os.environ.get("DATA_RETENTION_DAYS", "90"))
 CHAT_RATE_LIMIT = int(os.environ.get("CHAT_RATE_LIMIT_PER_MIN", "20"))
@@ -212,6 +215,7 @@ def auth_config() -> dict[str, Any]:
         "google_sso_enabled": bool(os.environ.get("GOOGLE_CLIENT_ID", "").strip()),
         "jwt_enabled": True,
         "demo_login_enabled": True,
+        "openai_configured": bool(os.environ.get("OPENAI_API_KEY", "").strip()),
     }
 
 

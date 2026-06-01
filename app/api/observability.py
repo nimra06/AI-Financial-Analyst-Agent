@@ -90,10 +90,13 @@ def get_metrics_text() -> str:
 
 def readiness_status() -> dict[str, Any]:
     db_ok = ping_db()
+    openai_ok = bool(os.environ.get("OPENAI_API_KEY", "").strip())
+    ready = db_ok and openai_ok
     return {
-        "status": "ready" if db_ok else "degraded",
+        "status": "ready" if ready else "degraded",
         "checks": {
             "database": "ok" if db_ok else "fail",
             "database_backend": "postgresql" if is_postgres() else "sqlite",
+            "openai_api_key": "ok" if openai_ok else "missing",
         },
     }
