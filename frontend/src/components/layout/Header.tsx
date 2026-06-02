@@ -11,7 +11,7 @@ export function Header() {
   const hasFreelance = Boolean(uploadValidation?.freelance_summary);
 
   return (
-    <header className="flex h-16 items-center justify-between gap-4 border-b border-white/[0.06] bg-background/60 px-6 backdrop-blur-md lg:px-8">
+    <header className="relative z-50 flex h-16 shrink-0 items-center justify-between gap-4 overflow-visible border-b border-white/[0.06] bg-background/60 px-6 backdrop-blur-md lg:px-8">
       <div className="min-w-0 flex-1">
         <h1 className="text-lg font-semibold text-text-primary">
           Financial Command Center

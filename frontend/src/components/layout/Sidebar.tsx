@@ -5,11 +5,13 @@ import {
   FileText,
   LayoutDashboard,
   LineChart,
+  LogOut,
   ShieldAlert,
   SlidersHorizontal,
   Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 import { useDashboard } from "@/context/DashboardContext";
 
 const NAV = [
@@ -23,6 +25,7 @@ const NAV = [
 ];
 
 export function Sidebar() {
+  const { user, signOut } = useAuth();
   const { activeSection, setActiveSection, dashboard, uploadValidation } = useDashboard();
   const hasFreelance = Boolean(
     uploadValidation?.freelance_summary &&
@@ -63,10 +66,23 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="border-t border-white/[0.06] p-4">
-        <p className="text-xs text-text-secondary">
-          Demo only · Not financial advice
-        </p>
+      <div className="space-y-3 border-t border-white/[0.06] p-4">
+        {user && (
+          <div className="rounded-xl border border-white/10 bg-card/40 px-3 py-2.5">
+            <p className="truncate text-sm font-medium text-text-primary">{user.name}</p>
+            <p className="truncate text-xs text-text-secondary">{user.email}</p>
+            <p className="mt-1 text-[10px] uppercase tracking-wide text-accent">{user.role}</p>
+            <button
+              type="button"
+              onClick={signOut}
+              className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-text-primary transition hover:bg-white/10"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign out
+            </button>
+          </div>
+        )}
+        <p className="text-xs text-text-secondary">Demo only · Not financial advice</p>
       </div>
     </aside>
   );
