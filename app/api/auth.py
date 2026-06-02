@@ -50,7 +50,7 @@ def claims_to_user(claims: dict[str, Any]) -> dict[str, str]:
     name = claims.get("name", "User")
     email = claims.get("email", claims.get("sub", "unknown"))
     role = claims.get("role", "Analyst")
-    if role not in {"Viewer", "Analyst", "Admin"}:
+    if role not in {"Analyst", "Admin"}:
         role = "Analyst"
     return {
         "actor": f"{name} <{email}>",

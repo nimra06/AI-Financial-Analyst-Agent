@@ -6,7 +6,7 @@ export const AUTH_TOKEN_KEY = "finanalyst_access_token";
 export interface DemoUser {
   name: string;
   email: string;
-  role: "Admin" | "Analyst" | "Viewer";
+  role: "Admin" | "Analyst";
 }
 
 export function readDemoUser(): DemoUser | null {

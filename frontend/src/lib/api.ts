@@ -358,7 +358,7 @@ export async function runScheduledReport(reportId: number): Promise<{ job_id: st
 export async function loginUser(body: {
   name: string;
   email: string;
-  role: "Admin" | "Analyst" | "Viewer";
+  role: "Admin" | "Analyst";
 }): Promise<{ access_token: string; user: DemoUser }> {
   const res = await fetch(`${API_BASE}/api/v1/auth/login`, {
     method: "POST",
@@ -458,7 +458,7 @@ export async function listApiKeys(): Promise<ApiKeyRecord[]> {
 export async function createApiKey(body: {
   label: string;
   owner_email: string;
-  role: "Admin" | "Analyst" | "Viewer";
+  role: "Admin" | "Analyst";
 }): Promise<{ raw_key: string; key: ApiKeyRecord }> {
   return request("/api/v1/admin/api-keys", {
     method: "POST",

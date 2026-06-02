@@ -16,7 +16,7 @@ export function roleLabel(role: DemoUser["role"]): string {
       return "Full access + audit";
     case "Analyst":
       return "Upload, AI, exports";
-    case "Viewer":
-      return "Read-only dashboards";
+    default:
+      return "Upload, AI, exports";
   }
 }

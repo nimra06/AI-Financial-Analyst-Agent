@@ -39,7 +39,7 @@ export function FileUpload({ compact = false }: { compact?: boolean }) {
         )}
       >
         <Lock className="mb-3 h-8 w-8 text-text-secondary" />
-        <p className="text-sm font-medium text-text-primary">Viewer role — read-only</p>
+        <p className="text-sm font-medium text-text-primary">Read-only mode</p>
         <p className="mt-1 text-xs text-text-secondary">
           Sign in as Analyst or Admin to import datasets
         </p>

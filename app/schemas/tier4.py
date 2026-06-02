@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 class AuthLoginRequest(BaseModel):
     name: str
     email: str
-    role: Literal["Viewer", "Analyst", "Admin"] = "Analyst"
+    role: Literal["Analyst", "Admin"] = "Analyst"
 
 
 class GoogleAuthRequest(BaseModel):
@@ -26,7 +26,7 @@ class AuthResponse(BaseModel):
 class ApiKeyCreateRequest(BaseModel):
     label: str
     owner_email: str
-    role: Literal["Viewer", "Analyst", "Admin"] = "Analyst"
+    role: Literal["Analyst", "Admin"] = "Analyst"
 
 
 class ApiKeyRecord(BaseModel):

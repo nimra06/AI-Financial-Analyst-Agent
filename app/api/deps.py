@@ -9,9 +9,7 @@ from fastapi import Header, HTTPException
 from api.auth import AuthError, claims_to_user, decode_access_token
 from db.api_keys_store import verify_api_key
 
-VIEWER_BLOCKED = (
-    "Viewer role cannot perform this action. Sign in as Analyst or Admin."
-)
+WRITE_BLOCKED = "This action requires Analyst or Admin role."
 
 
 def parse_demo_user(
@@ -20,7 +18,7 @@ def parse_demo_user(
 ) -> dict[str, str]:
     actor = (x_demo_user or "anonymous").strip() or "anonymous"
     role = (x_demo_role or "Analyst").strip()
-    if role not in {"Viewer", "Analyst", "Admin"}:
+    if role not in {"Analyst", "Admin"}:
         role = "Analyst"
     return {"actor": actor, "role": role, "auth_method": "demo"}
 
@@ -49,8 +47,8 @@ def get_current_user(
 
 
 def require_write_access(user: dict[str, str]) -> None:
-    if user["role"] == "Viewer":
-        raise HTTPException(status_code=403, detail=VIEWER_BLOCKED)
+    if user.get("role") not in {"Analyst", "Admin"}:
+        raise HTTPException(status_code=403, detail=WRITE_BLOCKED)
 
 
 def require_admin(user: dict[str, str]) -> None:

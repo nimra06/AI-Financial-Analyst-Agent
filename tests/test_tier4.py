@@ -48,10 +48,10 @@ def test_api_key_auth(client: TestClient) -> None:
 
 
 def test_api_keys_admin_only(client: TestClient) -> None:
-    viewer_token = create_access_token(name="V", email="v@x.com", role="Viewer")
+    analyst_token = create_access_token(name="U", email="u@x.com", role="Analyst")
     r = client.get(
         "/api/v1/admin/api-keys",
-        headers={"Authorization": f"Bearer {viewer_token}"},
+        headers={"Authorization": f"Bearer {analyst_token}"},
     )
     assert r.status_code == 403
 

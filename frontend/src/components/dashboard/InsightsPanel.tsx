@@ -61,7 +61,8 @@ export function InsightsPanel() {
 
       {!writeAccess && (
         <p className="rounded-xl border border-white/10 bg-surface/50 px-4 py-3 text-sm text-text-secondary">
-          Viewer role — you can read insights but cannot generate AI summaries or export reports.
+          Read-only mode — you can read insights but cannot generate AI summaries or export
+          reports.
         </p>
       )}
 

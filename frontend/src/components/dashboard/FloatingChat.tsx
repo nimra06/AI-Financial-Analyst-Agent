@@ -236,7 +236,7 @@ export function FloatingChat() {
                 disabled={!canChat || loading}
                 placeholder={
                   !writeAccess
-                    ? "Viewer role — read-only"
+                    ? "Read-only mode"
                     : chatMode === "dataset"
                       ? `Ask about ${dashboard!.source_file}…`
                       : chatMode === "freelance"

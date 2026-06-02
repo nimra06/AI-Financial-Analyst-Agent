@@ -9,7 +9,7 @@ import { roleLabel } from "@/lib/permissions";
 import { GOOGLE_CLIENT_ID, type DemoUser } from "@/lib/auth";
 import { fetchAuthConfig } from "@/lib/api";
 
-const ROLES: DemoUser["role"][] = ["Viewer", "Analyst", "Admin"];
+const ROLES: DemoUser["role"][] = ["Analyst", "Admin"];
 
 declare global {
   interface Window {
@@ -154,7 +154,7 @@ export function DemoSignIn() {
               <label className="mb-1.5 block text-xs font-medium text-text-secondary">
                 Role
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {ROLES.map((r) => (
                   <button
                     key={r}

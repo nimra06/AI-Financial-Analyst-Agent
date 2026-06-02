@@ -34,15 +34,15 @@ def test_retention_policy_endpoint() -> None:
     assert body["retention_days"] >= 0
 
 
-def test_viewer_cannot_upload() -> None:
+def test_analyst_can_upload() -> None:
     path = SAMPLE / "retail_monthly_pl.csv"
     with path.open("rb") as f:
         r = client.post(
             "/api/v1/upload",
             files={"file": (path.name, f, "text/csv")},
-            headers={"X-Demo-Role": "Viewer", "X-Demo-User": "viewer@test.com"},
+            headers={"X-Demo-Role": "Analyst", "X-Demo-User": "analyst@test.com"},
         )
-    assert r.status_code == 403
+    assert r.status_code == 200
 
 
 def test_rate_limiter_blocks() -> None:
