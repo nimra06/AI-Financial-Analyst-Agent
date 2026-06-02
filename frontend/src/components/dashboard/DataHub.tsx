@@ -1,25 +1,48 @@
 "use client";
 
-import { useEffect } from "react";
-import { Database, Download, FileText } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Database, Download, FileText, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileUpload } from "@/components/dashboard/FileUpload";
 import { ValidationPanel } from "@/components/dashboard/ValidationPanel";
 import { AuditLogPanel, RetentionNotice } from "@/components/dashboard/AuditLogPanel";
 import { AdminPanel } from "@/components/dashboard/AdminPanel";
+import { useAuth } from "@/context/AuthContext";
 import { useDashboard } from "@/context/DashboardContext";
+import { canWrite } from "@/lib/permissions";
 
 export function DataHub() {
+  const { user } = useAuth();
+  const writeAccess = canWrite(user);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const {
     sessions,
     loadSession,
+    removeSession,
     refreshSessions,
     dashboard,
     uploadValidation,
     clearUploadValidation,
     setChatOpen,
   } = useDashboard();
+
+  const handleDelete = async (sessionId: string, sourceFile: string) => {
+    if (!writeAccess) return;
+    const ok = window.confirm(
+      `Delete "${sourceFile}"? This removes the dataset, chat history, and alerts for this workspace.`
+    );
+    if (!ok) return;
+    setDeletingId(sessionId);
+    try {
+      await removeSession(sessionId);
+    } catch {
+      /* error surfaced via context */
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   useEffect(() => {
     refreshSessions();
@@ -105,7 +128,7 @@ export function DataHub() {
                   <th className="pb-3 pr-4 font-medium">Periods</th>
                   <th className="pb-3 pr-4 font-medium">Latest</th>
                   <th className="pb-3 pr-4 font-medium">Uploaded</th>
-                  <th className="pb-3 font-medium" />
+                  <th className="pb-3 text-right font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -133,13 +156,28 @@ export function DataHub() {
                       {new Date(s.created_at).toLocaleString()}
                     </td>
                     <td className="py-3">
-                      <button
-                        type="button"
-                        onClick={() => loadSession(s.session_id)}
-                        className="text-sm font-medium text-accent hover:underline"
-                      >
-                        {dashboard?.session_id === s.session_id ? "Current" : "Open"}
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => loadSession(s.session_id)}
+                          className="text-sm font-medium text-accent hover:underline"
+                        >
+                          {dashboard?.session_id === s.session_id ? "Current" : "Open"}
+                        </button>
+                        {writeAccess && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            disabled={deletingId === s.session_id}
+                            onClick={() => handleDelete(s.session_id, s.source_file)}
+                            className="text-red-300 hover:bg-red-500/10 hover:text-red-200"
+                            title="Delete dataset"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -17,6 +17,7 @@ import {
   generateSummary,
   enqueueForecastJob,
   pollJob,
+  deleteSession,
   getSession,
   listSessions,
   sendChat,
@@ -43,6 +44,7 @@ interface DashboardContextValue {
   setActiveSection: (s: string) => void;
   upload: (file: File) => Promise<void>;
   loadSession: (id: string) => Promise<void>;
+  removeSession: (id: string) => Promise<void>;
   refreshSessions: () => Promise<void>;
   runSummary: () => Promise<void>;
   runForecast: (metric: string, horizon: number) => Promise<void>;
@@ -204,6 +206,37 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     [loadChatHistory]
   );
 
+  const removeSession = useCallback(
+    async (id: string) => {
+      setLoading(true);
+      setError(null);
+      try {
+        await deleteSession(id);
+        const list = await listSessions();
+        setSessions(list);
+        if (dashboard?.session_id === id) {
+          setDashboard(null);
+          setSummary(null);
+          setForecast(null);
+          setChatMessages([]);
+          clearActiveSession();
+          if (list.length > 0) {
+            const data = await getSession(list[0].session_id, { skipAudit: true });
+            setDashboard(data);
+            persistActiveSession(list[0].session_id);
+            await loadChatHistory(list[0].session_id);
+          }
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to delete dataset");
+        throw e;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [dashboard?.session_id, loadChatHistory]
+  );
+
   const runSummary = useCallback(async () => {
     if (!dashboard) return;
     setLoading(true);
@@ -322,6 +355,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         setActiveSection,
         upload,
         loadSession,
+        removeSession,
         refreshSessions,
         runSummary,
         runForecast,

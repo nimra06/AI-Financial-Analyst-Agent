@@ -133,6 +133,13 @@ export async function listSessions(): Promise<SessionMeta[]> {
   return request<SessionMeta[]>("/api/v1/sessions");
 }
 
+export async function deleteSession(sessionId: string): Promise<void> {
+  await request<{ status: string }>(`/api/v1/sessions/${sessionId}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+}
+
 export async function getSession(
   sessionId: string,
   options?: { skipAudit?: boolean }

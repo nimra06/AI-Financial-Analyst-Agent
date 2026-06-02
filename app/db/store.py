@@ -156,3 +156,21 @@ def clear_chat_messages(session_id: str) -> None:
     init_db()
     with get_conn() as conn:
         execute(conn, "DELETE FROM chat_messages WHERE session_id = ?", (session_id,))
+
+
+def delete_session(session_id: str) -> bool:
+    """Remove a dataset workspace and related chat, alerts, and scheduled reports."""
+    init_db()
+    with get_conn() as conn:
+        row = fetchone(
+            conn,
+            "SELECT session_id FROM sessions WHERE session_id = ?",
+            (session_id,),
+        )
+        if row is None:
+            return False
+        execute(conn, "DELETE FROM chat_messages WHERE session_id = ?", (session_id,))
+        execute(conn, "DELETE FROM alerts WHERE session_id = ?", (session_id,))
+        execute(conn, "DELETE FROM scheduled_reports WHERE session_id = ?", (session_id,))
+        cur = execute(conn, "DELETE FROM sessions WHERE session_id = ?", (session_id,))
+        return bool(getattr(cur, "rowcount", 0))

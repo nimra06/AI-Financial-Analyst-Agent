@@ -58,6 +58,7 @@ from db.audit import (
 from db.connection import init_db
 from db.store import (
     clear_chat_messages,
+    delete_session,
     get_chat_messages,
     get_session,
     list_sessions,
@@ -346,6 +347,26 @@ def sessions_get(
         )
     dash = restore_dashboard_from_records(payload)
     return enrich_dashboard_tier3(dash)
+
+
+@app.delete("/api/v1/sessions/{session_id}")
+def sessions_delete(
+    session_id: str,
+    user: Annotated[dict[str, str], Depends(get_current_user)],
+) -> dict[str, str]:
+    require_write_access(user)
+    payload = get_session(session_id)
+    if payload is None:
+        raise HTTPException(status_code=404, detail="Session not found")
+    if not delete_session(session_id):
+        raise HTTPException(status_code=404, detail="Session not found")
+    log_audit_event(
+        "session_delete",
+        user["actor"],
+        session_id=session_id,
+        detail={"source_file": payload.get("source_file"), "role": user["role"]},
+    )
+    return {"status": "deleted", "session_id": session_id}
 
 
 @app.post("/api/v1/upload", response_model=UploadResponse)
