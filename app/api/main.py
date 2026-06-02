@@ -514,11 +514,15 @@ def chat_endpoint(
     return ChatResponse(result=result)
 
 
+_EPHEMERAL_CHAT_SESSIONS = frozenset({"advisory", "advisory-freelance"})
+
+
 @app.get("/api/v1/sessions/{session_id}/chat", response_model=ChatHistoryResponse)
 def chat_history(session_id: str) -> ChatHistoryResponse:
-    payload = get_session(session_id)
-    if payload is None:
-        raise HTTPException(status_code=404, detail="Session not found")
+    if session_id not in _EPHEMERAL_CHAT_SESSIONS:
+        payload = get_session(session_id)
+        if payload is None:
+            raise HTTPException(status_code=404, detail="Session not found")
     rows = get_chat_messages(session_id)
     return ChatHistoryResponse(
         messages=[ChatMessageRecord(**m) for m in rows]
@@ -531,9 +535,10 @@ def chat_clear(
     user: Annotated[dict[str, str], Depends(get_current_user)],
 ) -> dict[str, str]:
     require_write_access(user)
-    payload = get_session(session_id)
-    if payload is None:
-        raise HTTPException(status_code=404, detail="Session not found")
+    if session_id not in _EPHEMERAL_CHAT_SESSIONS:
+        payload = get_session(session_id)
+        if payload is None:
+            raise HTTPException(status_code=404, detail="Session not found")
     clear_chat_messages(session_id)
     log_audit_event("chat_clear", user["actor"], session_id=session_id)
     return {"status": "cleared"}

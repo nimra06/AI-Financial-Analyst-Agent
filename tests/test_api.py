@@ -113,3 +113,19 @@ def test_executive_report_endpoint() -> None:
     assert "html" in data
     assert "markdown" in data
     assert len(data["html"]) > 100
+
+
+def test_advisory_chat_history_without_dataset_session() -> None:
+    hist = client.get("/api/v1/sessions/advisory/chat")
+    assert hist.status_code == 200
+    assert hist.json()["messages"] == []
+
+
+def test_delete_session() -> None:
+    path = SAMPLE / "retail_monthly_pl.csv"
+    with path.open("rb") as f:
+        up = client.post("/api/v1/upload", files={"file": (path.name, f, "text/csv")})
+    session_id = up.json()["dashboard"]["session_id"]
+    r = client.delete(f"/api/v1/sessions/{session_id}")
+    assert r.status_code == 200, r.text
+    assert client.get(f"/api/v1/sessions/{session_id}").status_code == 404

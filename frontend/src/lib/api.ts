@@ -12,6 +12,7 @@ import type {
 } from "@/types/dashboard";
 import type { DemoUser } from "@/lib/auth";
 import { readAccessToken, readDemoUser, clearAuthSession } from "@/lib/auth";
+import { isEphemeralChatSession } from "@/lib/chatSessions";
 
 /** Absolute API origin — adds https:// if the env var omits a protocol. */
 function normalizeApiBase(raw: string | undefined): string {
@@ -157,6 +158,20 @@ export async function getSession(
 }
 
 export async function fetchChatHistory(sessionId: string): Promise<ChatMessage[]> {
+  if (isEphemeralChatSession(sessionId)) {
+    try {
+      const res = await request<{ messages: ChatMessage[] }>(
+        `/api/v1/sessions/${sessionId}/chat`
+      );
+      return res.messages.map((m) => ({
+        role: m.role,
+        content: m.content,
+        sources: m.sources,
+      }));
+    } catch {
+      return [];
+    }
+  }
   const res = await request<{ messages: ChatMessage[] }>(
     `/api/v1/sessions/${sessionId}/chat`
   );
@@ -168,6 +183,16 @@ export async function fetchChatHistory(sessionId: string): Promise<ChatMessage[]
 }
 
 export async function clearChatHistory(sessionId: string): Promise<void> {
+  if (isEphemeralChatSession(sessionId)) {
+    try {
+      await request<{ status: string }>(`/api/v1/sessions/${sessionId}/chat`, {
+        method: "DELETE",
+      });
+    } catch {
+      /* no dataset workspace — ignore */
+    }
+    return;
+  }
   await request<{ status: string }>(`/api/v1/sessions/${sessionId}/chat`, {
     method: "DELETE",
   });
